@@ -14,7 +14,8 @@ paper lantern.
   the next, then verified by PSNR (starts 34.6–35.9 dB, ends 21.1–32.9 dB).
 - A scroll-scrub engine (`scrub-engine.js`) maps scroll position to video
   time across the whole chain — no cuts, no autoplay.
-- Clips are encoded for scrubbing: 720p, crf 20, GOP 8, faststart.
+- Clips are encoded for scrubbing at 1080p (Flow "1080p Upscaled" downloads),
+  crf 20, GOP 8, faststart.
 - Static site, no build step: open `index.html` or serve the folder.
 
 ## Credits
