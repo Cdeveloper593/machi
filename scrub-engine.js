@@ -191,6 +191,10 @@ function mountScrollWorld(container, config) {
   }
 
   function jumpTo(i) {
+    // Section 0's copy greets on landing and fades as the dive progresses, so its
+    // "peak" is the very top — jumping to mid-dive (the generic rule) lands on a
+    // bare frame with the headline already gone.
+    if (i === 0) { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
     const seg = SECTIONS[i]._seg;
     window.scrollTo({ top: seg.start + (seg.end - seg.start) * 0.5, behavior: reduce ? 'auto' : 'smooth' });
   }
