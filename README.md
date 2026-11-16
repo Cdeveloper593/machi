@@ -1,6 +1,6 @@
 # MACHI まち — a scroll-world demo
 
-One small clay-diorama Japanese town, one whole day. Scroll, and the camera
+One small miniature-diorama Japanese town, one whole day. Scroll, and the camera
 flies through Machi in a single continuous take — morning arrival over the
 town island, the shotengai shopping street, the canal at golden hour, shrine
 steps at dusk, the night market, and a finale inside the glow of a giant
