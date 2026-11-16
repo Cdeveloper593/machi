@@ -87,7 +87,7 @@ function mountScrollWorld(container, config) {
   const SEGMENTS = [];
   SECTIONS.forEach((s, i) => {
     const dive = { kind: 'dive', si: i, clip: s.clip, clipM: s.clipMobile, still: s.still, stillM: s.stillMobile,
-                   accent: s.accent, w: s.scroll || DIVE_W, linger: s.linger || 0 };
+                   accent: s.accent, dark: !!s.dark, w: s.scroll || DIVE_W, linger: s.linger || 0 };
     SEGMENTS.push(dive);
     s._seg = dive;
     // A connector is optional: if connectors[i] is falsy, the two dives simply
@@ -149,7 +149,7 @@ function mountScrollWorld(container, config) {
   // per-section copy / route / nav
   const copies = [], dots = [];
   SECTIONS.forEach((s, i) => {
-    const c = el('article', 'sw-copy'); c.style.setProperty('--sw-accent', s.accent || '');
+    const c = el('article', 'sw-copy' + (s.dark ? ' sw-copy--dark' : '')); c.style.setProperty('--sw-accent', s.accent || '');
     c.innerHTML =
       `<span class="sw-copy__num">${pad(i + 1)} / ${pad(N)}</span>` +
       (s.eyebrow ? `<span class="sw-copy__eyebrow">${esc(s.eyebrow)}</span>` : '') +
@@ -267,6 +267,7 @@ function mountScrollWorld(container, config) {
       dots.forEach((d, k) => d.classList.toggle('is-active', k === near));
       nav.querySelectorAll('.sw-nav__item').forEach((n, k) => n.classList.toggle('is-active', k === near));
       container.style.setProperty('--sw-accent', SECTIONS[near].accent || '');
+      container.classList.toggle('sw-night', !!SECTIONS[near].dark);
     }
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
@@ -389,8 +390,16 @@ function injectCSS() {
   .sw-scene__video,.sw-scene__still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;filter:saturate(1.07) contrast(1.03);}
   .sw-scene__still{will-change:transform;} .sw-scene.has-clip .sw-scene__still{opacity:0;} .sw-scene__video{z-index:1;}
   .sw-copylayer{position:fixed;inset:0;z-index:20;pointer-events:none;}
-  .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(44vw,620px);background:linear-gradient(90deg,color-mix(in srgb,var(--sw-bg) 88%,transparent) 0%,color-mix(in srgb,var(--sw-bg) 50%,transparent) 38%,color-mix(in srgb,var(--sw-bg) 15%,transparent) 68%,transparent 100%);}
+  .sw-copylayer::before{content:"";position:absolute;inset:0;width:min(44vw,620px);background:linear-gradient(90deg,color-mix(in srgb,var(--sw-bg) 88%,transparent) 0%,color-mix(in srgb,var(--sw-bg) 50%,transparent) 38%,color-mix(in srgb,var(--sw-bg) 15%,transparent) 68%,transparent 100%);transition:opacity .6s ease;}
+  .sw-root.sw-night .sw-copylayer::before{opacity:0;}
+  .sw-root.sw-night{--sw-ink:#F8F2E4;--sw-ink-soft:#C6BED8;}
+  .sw-root.sw-night .sw-nav{background:color-mix(in srgb,#141233 55%,transparent);}
+  .sw-root.sw-night .sw-route__label{color:#241d2b;}
   .sw-copy{position:absolute;left:clamp(18px,5vw,64px);top:50%;transform:translateY(-50%);width:min(42vw,460px);opacity:0;will-change:opacity,transform;}
+  .sw-copy--dark::before{content:"";position:absolute;inset:-30% -38%;z-index:-1;background:radial-gradient(58% 58% at 40% 50%,rgba(7,9,36,.66),rgba(7,9,36,.30) 55%,transparent 78%);}
+  .sw-copy--dark .sw-copy__title{text-shadow:0 2px 22px rgba(7,9,36,.55);}
+  .sw-copy--dark .sw-copy__body{text-shadow:0 1px 14px rgba(7,9,36,.6);}
+  .sw-copy--dark .sw-btn--primary{background:#F8F2E4;color:#241d2b;}
   .sw-copy__num{font-family:ui-monospace,Menlo,monospace;font-size:.74rem;letter-spacing:.12em;color:var(--sw-ink-soft);}
   .sw-copy__eyebrow{display:block;margin-top:18px;font-family:var(--sw-font-display);font-weight:700;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sw-accent);}
   .sw-copy__title{font-family:var(--sw-font-display);font-weight:700;color:var(--sw-ink);font-size:clamp(2rem,4.4vw,3.5rem);line-height:1.03;margin:12px 0 0;letter-spacing:-.01em;text-shadow:0 2px 20px color-mix(in srgb,var(--sw-bg) 70%,transparent);}

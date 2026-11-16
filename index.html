@@ -14,6 +14,13 @@
       --sw-ink-soft: #6a6072;
       --sw-accent: #7FA36B;
     }
+    /* Night sections (engine toggles .sw-night): flip the ink tokens light.
+       Must live here, unlayered — the engine's CSS is in @layer sw, so its
+       own token rules can never override these page tokens. */
+    .sw-root.sw-night {
+      --sw-ink: #F8F2E4;
+      --sw-ink-soft: #C6BED8;
+    }
     @media (prefers-reduced-motion: no-preference) {
       html { scroll-behavior: smooth; }
     }
@@ -88,7 +95,7 @@
           id: 'nightmarket', label: 'Night Market',
           still: 'assets/nightmarket.jpg',
           clip: 'assets/vid/scene5.mp4',
-          accent: '#E4572E',
+          accent: '#E4572E', dark: true,
           eyebrow: 'After dark',
           title: 'The alley that glows.',
           body: 'Steam, paper lanterns and midnight snacks — Machi stays up late.',
@@ -98,7 +105,7 @@
           id: 'finale', label: 'The Lantern',
           still: 'assets/finale.jpg',
           clip: 'assets/vid/scene6.mp4',
-          accent: '#F2A541',
+          accent: '#F2A541', dark: true,
           eyebrow: 'Your world next',
           title: 'Every brand deserves a world.',
           body: 'Machi is a demo. Your town, shop or story could be the next one visitors fly through.',
