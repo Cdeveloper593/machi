@@ -180,7 +180,7 @@ function mountScrollWorld(container, config) {
   const lingerEase = (x, L) => { L = clamp(L); const c = x - 0.5; return (1 - L) * x + L * (4 * c * c * c + 0.5); };
   let vh = window.innerHeight, stageX = 0, totalW = 0, activeIndex = -1;
   let frameId = null, needsRead = false, lastActivity = 0;
-  const SEEK_EPS = 1 / 30, SEEK_INTERVAL = 36, SNAP = 0.0005, IDLE_GRACE = 160;
+  const IDLE_GRACE = 160;
   const writtenStyles = new WeakMap();
   const rounded = value => Number(value.toFixed(3));
 
@@ -246,10 +246,6 @@ function mountScrollWorld(container, config) {
           s.duration = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 1;
           s.ready = true; s.loading = false;
           read();
-          if (!current()) return;
-          // A clip approached from its end must start on the matching seam.
-          // Interior targets retain the original 0.18 easing from the poster.
-          if (s.target === 1) s.cur = 1;
           wake();
         });
         // Keep the poster until a decoded seek; late events from retired videos
@@ -358,26 +354,30 @@ function mountScrollWorld(container, config) {
     frameId = null;
     if (document.hidden) return;
     if (needsRead) read();
+    // Frame behaviour restored to the original engine at the user's request
+    // (2026-11-16): seeks are issued exactly as before — sub-frame epsilon
+    // (0.008s desktop / 0.02s mobile) compared against the live currentTime,
+    // no minimum seek interval, no snap. The loop still sleeps once the glide
+    // has converged below the seek epsilon, which is also where the original
+    // code stopped issuing seeks.
+    const eps = isMobile() ? 0.02 : 0.008;   // coarser seek step on phones = fewer decodes
     let animating = false;
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
       if (!s.seekEligible || !s.hasClip || !s.ready || !s.video) continue;
-      // seeked wakes the loop again if the decoder outlasts the idle grace period.
+      // Never queue a seek while the decoder is still resolving the last one.
+      // On phones a fast flick would otherwise pile up seeks and freeze the clip;
+      // cur keeps lerping, so we snap to the latest target the moment it's free.
       if (s.video.seeking) continue;
+      if (!s.visible && Math.abs(s.cur - s.target) < 0.002) continue;
       s.cur += (s.target - s.cur) * (reduce ? 1 : 0.18);
-      if (Math.abs(s.target - s.cur) < SNAP) s.cur = s.target;
-      if (s.cur !== s.target) animating = true;
-      const t = clamp(s.cur, 0, 0.999) * s.duration;
-      // Always finish on the original seam endpoints, even below one frame.
-      const endpoint = s.cur === s.target && (s.target === 0 || s.target === 1);
-      const seekNeeded = s.lastSeek === null || Math.abs(s.lastSeek - t) >= SEEK_EPS ||
-        (endpoint && s.lastSeek !== t);
-      if (seekNeeded) {
-        if (now - s.lastSeekAt < SEEK_INTERVAL) { animating = true; continue; }
-        try {
-          s.video.currentTime = t;
-          s.lastSeek = t; s.lastSeekAt = now;
-        } catch (e) { /* A later media/scroll event will retry an unavailable seek. */ }
+      const dur = s.duration || 1;
+      const t = clamp(s.cur, 0, 0.999) * dur;
+      if (Math.abs(s.video.currentTime - t) > eps) {
+        try { s.video.currentTime = t; } catch (e) {}
+        animating = true;
+      } else if (Math.abs(s.target - s.cur) * dur > eps) {
+        animating = true;   // glide still converging; later frames will seek again
       }
     }
     if (animating || now - lastActivity < IDLE_GRACE) frameId = requestAnimationFrame(raf);
